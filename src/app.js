@@ -63,6 +63,12 @@ angular.module("Webmail", [ "ngSanitize" ])
 		};
 	}
 
+	// recherche
+	$scope.recherche = null;
+	$scope.razRecherche = function() {
+		$scope.recherche = null;
+	}
+
 	// Watch location path changes
 	$scope.$watch(function() {
 		return $location.path();
@@ -87,4 +93,13 @@ angular.module("Webmail", [ "ngSanitize" ])
 		}
 	});
 
+	
+})
+.filter("surbrillanceRecherche", function() {
+	return function(input, recherche) {
+		if (recherche) {
+			return input.replace(new RegExp("(" + recherche + ")", "gi"), "<span class='surbrillanceRecherche'>$1</span>");
+		}
+		return input;
+	}
 });
