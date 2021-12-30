@@ -1,4 +1,9 @@
 ﻿.spacer {
+﻿a {
+	cursor: pointer;
+}
+
+.spacer {
 	margin-top: 20px;
 }
 
