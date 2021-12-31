@@ -1,4 +1,4 @@
-angular.module("Webmail", [ "ngSanitize" ])
+angular.module("Webmail", [ "ngSanitize", "ui.tinymce" ])
 .controller("WebmailCtrl", function($scope, $location, $filter) {
 	
 	$scope.dossiers = [
@@ -23,6 +23,8 @@ angular.module("Webmail", [ "ngSanitize" ])
 		] }
 	];
 
+	$scope.idProchainMail = 12;
+
 	$scope.dossierCourant = null;
 	$scope.emailSelectionne = null;
 
@@ -35,9 +37,12 @@ angular.module("Webmail", [ "ngSanitize" ])
 	$scope.selectionDossier = function(dossier) {
 		$scope.dossierCourant = dossier;
 		$scope.emailSelectionne = null;
+		if (dossier) {
+			$scope.nouveauMail = null;
+		}
 	}
 
-	// Set the selected email  
+	// Set the selected email 
 	$scope.selectionEmail = function(email) {
 		$scope.emailSelectionne = email;
 	};
@@ -69,12 +74,67 @@ angular.module("Webmail", [ "ngSanitize" ])
 		$scope.recherche = null;
 	}
 
+	// New mail
+	$scope.nouveauMail = null;
+	$scope.razMail = function() {
+		$scope.nouveauMail = {
+			from: "Rudy",
+			date: new Date()
+		};
+		if (tinyMCE.activeEditor) {
+			tinyMCE.activeEditor.setContent("");
+		}
+		$scope.formNouveauMail.$setPristine();
+	}
+
+	// set TinyMCE parameters
+	$scope.optionsTinyMce = {
+		language: "fr_FR",
+		statusbar: false,
+		menubar: false
+	};
+
+
+	// send email
+	$scope.envoiMail = function() {
+
+		var regExpValidEmail = new RegExp("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$", "gi");
+
+		// Email pattern check
+		if (!$scope.nouveauMail.to || !$scope.nouveauMail.to.match(regExpValidEmail)) {
+			window.alert("Erreur\n\nMerci de vérifier l'adresse e-mail saisie.");
+			return;
+		}
+
+		// Subject check
+		if (!$scope.nouveauMail.subject) {
+			if (!window.confirm("Confirmation\n\nÊtes-vous certain de vouloir envoyer un mail sans objet ?")) {
+				return;
+			}
+		}
+
+		// Add sent emails in ENVOYE folder
+		$scope.dossiers.forEach(function(item) {
+			if (item.value == "ENVOYES") {
+				$scope.nouveauMail.id = $scope.idProchainMail++;
+				item.emails.push($scope.nouveauMail);
+				$scope.nouveauMail = null;
+				$location.path("/");
+			}
+		})
+
+		
+	}
+
+	// navigation
 	// Watch location path changes
 	$scope.$watch(function() {
 		return $location.path();
 	}, function(newPath) {
+
 		var tabPath = newPath.split("/");
-		if (tabPath.length > 1) {
+		
+		if (tabPath.length > 1){
 			var valDossier = tabPath[1];
 			$scope.dossiers.forEach(function(item) {
 				if (item.value == valDossier) {
@@ -82,7 +142,7 @@ angular.module("Webmail", [ "ngSanitize" ])
 				}
 			});
 		}
-
+		
 		if (tabPath.length > 2) {
 			var idMail = tabPath[2];
 			$scope.dossierCourant.emails.forEach(function(item) {
@@ -91,6 +151,12 @@ angular.module("Webmail", [ "ngSanitize" ])
 				}
 			});
 		}
+
+		if(tabPath.length > 1 && tabPath[1] == "nouveauMail"){
+			$scope.razMail();
+			$scope.selectionDossier(null);
+		}
+
 	});
 
 	
